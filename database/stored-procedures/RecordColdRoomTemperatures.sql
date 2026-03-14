@@ -1,51 +1,50 @@
-﻿
-CREATE PROCEDURE Website.RecordColdRoomTemperatures
-@SensorReadings Website.SensorDataList READONLY
-WITH NATIVE_COMPILATION, SCHEMABINDING, EXECUTE AS OWNER
-AS
-BEGIN ATOMIC WITH
-(
-	TRANSACTION ISOLATION LEVEL = SNAPSHOT,
-	LANGUAGE = N'English'
+-- Translated from MSSQL to PostgreSQL by MigrateIQ
+
+CREATE OR REPLACE PROCEDURE website.record_cold_room_temperatures(
+    p_sensor_readings website.sensor_data_list[]
 )
-    BEGIN TRY
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_number_of_readings INT;
+    v_counter INT;
+    v_cold_room_sensor_number INT;
+    v_recorded_when TIMESTAMP;
+    v_temperature DECIMAL(18,2);
+    v_row_count INT;
+    v_reading website.sensor_data_list;
+BEGIN
+    BEGIN
+        v_number_of_readings := array_length(p_sensor_readings, 1);
+        v_counter := 1;
 
-		DECLARE @NumberOfReadings int = (SELECT MAX(SensorDataListID) FROM @SensorReadings);
-		DECLARE @Counter int = (SELECT MIN(SensorDataListID) FROM @SensorReadings);
+        -- note that we cannot use a merge here because multiple readings might exist for each sensor
 
-		DECLARE @ColdRoomSensorNumber int;
-		DECLARE @RecordedWhen datetime2(7);
-		DECLARE @Temperature decimal(18,2);
+        WHILE v_counter <= v_number_of_readings LOOP
+            v_reading := p_sensor_readings[v_counter];
+            v_cold_room_sensor_number := v_reading.cold_room_sensor_number;
+            v_recorded_when := v_reading.recorded_when;
+            v_temperature := v_reading.temperature;
 
-		-- note that we cannot use a merge here because multiple readings might exist for each sensor
+            UPDATE warehouse.cold_room_temperatures
+                SET recorded_when = v_recorded_when,
+                    temperature = v_temperature
+            WHERE cold_room_sensor_number = v_cold_room_sensor_number;
 
-		WHILE @Counter <= @NumberOfReadings
-		BEGIN
-			SELECT @ColdRoomSensorNumber = ColdRoomSensorNumber,
-			       @RecordedWhen = RecordedWhen,
-				   @Temperature = Temperature
-			FROM @SensorReadings
-			WHERE SensorDataListID = @Counter;
+            GET DIAGNOSTICS v_row_count = ROW_COUNT;
 
-			UPDATE Warehouse.ColdRoomTemperatures
-				SET RecordedWhen = @RecordedWhen,
-				    Temperature = @Temperature
-			WHERE ColdRoomSensorNumber = @ColdRoomSensorNumber;
+            IF v_row_count = 0 THEN
+                INSERT INTO warehouse.cold_room_temperatures
+                    (cold_room_sensor_number, recorded_when, temperature)
+                VALUES (v_cold_room_sensor_number, v_recorded_when, v_temperature);
+            END IF;
 
-			IF @@ROWCOUNT = 0
-			BEGIN
-				INSERT Warehouse.ColdRoomTemperatures
-					(ColdRoomSensorNumber, RecordedWhen, Temperature)
-				VALUES (@ColdRoomSensorNumber, @RecordedWhen, @Temperature);
-			END;
+            v_counter := v_counter + 1;
+        END LOOP;
 
-			SET @Counter += 1;
-		END;
-
-    END TRY
-    BEGIN CATCH
-        THROW 51000, N'Unable to apply the sensor data', 2;
-
-        RETURN 1;
-    END CATCH;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE EXCEPTION 'Unable to apply the sensor data';
+    END;
 END;
+$$;

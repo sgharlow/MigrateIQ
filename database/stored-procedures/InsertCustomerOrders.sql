@@ -1,65 +1,55 @@
-﻿
-CREATE PROCEDURE Website.InsertCustomerOrders
-@Orders Website.OrderList READONLY,
-@OrderLines Website.OrderLineList READONLY,
-@OrdersCreatedByPersonID int,
-@SalespersonPersonID int
-WITH EXECUTE AS OWNER
-AS
-BEGIN
-    SET NOCOUNT ON;
-    SET XACT_ABORT ON;
+-- Translated from MSSQL to PostgreSQL by MigrateIQ
 
-    DECLARE @OrdersToGenerate AS TABLE
-    (
-        OrderReference int PRIMARY KEY,   -- reference from the application
-        OrderID int
-    );
+CREATE OR REPLACE PROCEDURE website.insert_customer_orders(
+    p_orders website.order_list[],
+    p_order_lines website.order_line_list[],
+    p_orders_created_by_person_id INT,
+    p_salesperson_person_id INT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    -- Create a temporary table to hold orders to generate
+    CREATE TEMP TABLE orders_to_generate (
+        order_reference INT PRIMARY KEY,   -- reference from the application
+        order_id INT
+    ) ON COMMIT DROP;
 
     -- allocate the new order numbers
+    INSERT INTO orders_to_generate (order_reference, order_id)
+    SELECT o.order_reference, nextval('sequences.order_id')
+    FROM unnest(p_orders) AS o;
 
-    INSERT @OrdersToGenerate (OrderReference, OrderID)
-    SELECT OrderReference, NEXT VALUE FOR Sequences.OrderID
-    FROM @Orders;
+    BEGIN
+        INSERT INTO sales.orders
+            (order_id, customer_id, salesperson_person_id, picked_by_person_id, contact_person_id, backorder_order_id, order_date,
+             expected_delivery_date, customer_purchase_order_number, is_undersupply_backordered, comments, delivery_instructions, internal_comments,
+             picking_completed_when, last_edited_by, last_edited_when)
+        SELECT otg.order_id, o.customer_id, p_salesperson_person_id, NULL, o.contact_person_id, NULL, NOW(),
+               o.expected_delivery_date, o.customer_purchase_order_number, o.is_undersupply_backordered, o.comments, o.delivery_instructions, NULL,
+               NULL, p_orders_created_by_person_id, NOW()
+        FROM orders_to_generate AS otg
+        INNER JOIN unnest(p_orders) AS o
+        ON otg.order_reference = o.order_reference;
 
-    BEGIN TRY
+        INSERT INTO sales.order_lines
+            (order_id, stock_item_id, description, package_type_id, quantity, unit_price,
+             tax_rate, picked_quantity, picking_completed_when, last_edited_by, last_edited_when)
+        SELECT otg.order_id, ol.stock_item_id, ol.description, si.unit_package_id, ol.quantity,
+               website.calculate_customer_price(o.customer_id, ol.stock_item_id, NOW()),
+               si.tax_rate, 0, NULL, p_orders_created_by_person_id, NOW()
+        FROM orders_to_generate AS otg
+        INNER JOIN unnest(p_order_lines) AS ol
+        ON otg.order_reference = ol.order_reference
+        INNER JOIN unnest(p_orders) AS o
+        ON ol.order_reference = o.order_reference
+        INNER JOIN warehouse.stock_items AS si
+        ON ol.stock_item_id = si.stock_item_id;
 
-        BEGIN TRAN;
-
-        INSERT Sales.Orders
-            (OrderID, CustomerID, SalespersonPersonID, PickedByPersonID, ContactPersonID, BackorderOrderID, OrderDate,
-             ExpectedDeliveryDate, CustomerPurchaseOrderNumber, IsUndersupplyBackordered, Comments, DeliveryInstructions, InternalComments,
-             PickingCompletedWhen, LastEditedBy, LastEditedWhen)
-        SELECT otg.OrderID, o.CustomerID, @SalespersonPersonID, NULL, o.ContactPersonID, NULL, SYSDATETIME(),
-               o.ExpectedDeliveryDate, o.CustomerPurchaseOrderNumber, o.IsUndersupplyBackordered, o.Comments, o.DeliveryInstructions, NULL,
-               NULL, @OrdersCreatedByPersonID, SYSDATETIME()
-        FROM @OrdersToGenerate AS otg
-        INNER JOIN @Orders AS o
-        ON otg.OrderReference = o.OrderReference;
-
-        INSERT Sales.OrderLines
-            (OrderID, StockItemID, [Description], PackageTypeID, Quantity, UnitPrice,
-             TaxRate, PickedQuantity, PickingCompletedWhen, LastEditedBy, LastEditedWhen)
-        SELECT otg.OrderID, ol.StockItemID, ol.[Description], si.UnitPackageID, ol.Quantity,
-               Website.CalculateCustomerPrice(o.CustomerID, ol.StockItemID, SYSDATETIME()),
-               si.TaxRate, 0, NULL, @OrdersCreatedByPersonID, SYSDATETIME()
-        FROM @OrdersToGenerate AS otg
-        INNER JOIN @OrderLines AS ol
-        ON otg.OrderReference = ol.OrderReference
-		INNER JOIN @Orders AS o
-		ON ol.OrderReference = o.OrderReference
-        INNER JOIN Warehouse.StockItems AS si
-        ON ol.StockItemID = si.StockItemID;
-
-        COMMIT;
-
-    END TRY
-    BEGIN CATCH
-        IF XACT_STATE() <> 0 ROLLBACK;
-        PRINT N'Unable to create the customer orders.';
-        THROW;
-        RETURN -1;
-    END CATCH;
-
-    RETURN 0;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'Unable to create the customer orders.';
+        RAISE;
+    END;
 END;
+$$;

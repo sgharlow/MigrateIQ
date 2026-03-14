@@ -1,36 +1,31 @@
-import sql from 'mssql';
+// Translated from MSSQL to PostgreSQL by MigrateIQ
 
-const config: sql.config = {
-  server: process.env.DB_HOST || 'localhost',
+import { Pool } from 'pg';
+
+const config = {
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432', 10),
   database: 'WideWorldImporters',
-  user: process.env.DB_USER || 'sa',
+  user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
-  options: {
-    encrypt: true,
-    trustServerCertificate: true,
-    enableArithAbort: true,
-  },
-  pool: {
-    max: 10,
-    min: 0,
-    idleTimeoutMillis: 30000,
-  },
+  max: 10,
+  min: 0,
+  idleTimeoutMillis: 30000,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 };
 
-let pool: sql.ConnectionPool | null = null;
+let pool: Pool | null = null;
 
-export async function getPool(): Promise<sql.ConnectionPool> {
+export async function getPool(): Promise<Pool> {
   if (!pool) {
-    pool = await new sql.ConnectionPool(config).connect();
+    pool = new Pool(config);
   }
   return pool;
 }
 
 export async function closePool(): Promise<void> {
   if (pool) {
-    await pool.close();
+    await pool.end();
     pool = null;
   }
 }
-
-export { sql };

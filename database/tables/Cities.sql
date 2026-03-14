@@ -1,49 +1,35 @@
-﻿CREATE TABLE [Application].[Cities] (
-    [CityID]                   INT                                         CONSTRAINT [DF_Application_Cities_CityID] DEFAULT (NEXT VALUE FOR [Sequences].[CityID]) NOT NULL,
-    [CityName]                 NVARCHAR (50)                               NOT NULL,
-    [StateProvinceID]          INT                                         NOT NULL,
-    [Location]                 [sys].[geography]                           NULL,
-    [LatestRecordedPopulation] BIGINT                                      NULL,
-    [LastEditedBy]             INT                                         NOT NULL,
-    [ValidFrom]                DATETIME2 (7) GENERATED ALWAYS AS ROW START NOT NULL,
-    [ValidTo]                  DATETIME2 (7) GENERATED ALWAYS AS ROW END   NOT NULL,
-    CONSTRAINT [PK_Application_Cities] PRIMARY KEY CLUSTERED ([CityID] ASC),
-    CONSTRAINT [FK_Application_Cities_Application_People] FOREIGN KEY ([LastEditedBy]) REFERENCES [Application].[People] ([PersonID]),
-    CONSTRAINT [FK_Application_Cities_StateProvinceID_Application_StateProvinces] FOREIGN KEY ([StateProvinceID]) REFERENCES [Application].[StateProvinces] ([StateProvinceID]),
-    PERIOD FOR SYSTEM_TIME ([ValidFrom], [ValidTo])
-)
-WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE=[Application].[Cities_Archive], DATA_CONSISTENCY_CHECK=ON));
+-- Translated from MSSQL to PostgreSQL by MigrateIQ
 
+-- Requires PostGIS extension for geography type
+CREATE EXTENSION IF NOT EXISTS postgis;
 
-GO
-CREATE NONCLUSTERED INDEX [FK_Application_Cities_StateProvinceID]
-    ON [Application].[Cities]([StateProvinceID] ASC);
+-- TEMPORAL TABLE NOTE: MSSQL uses native system-versioned temporal tables.
+-- PostgreSQL approach: Use temporal_tables extension or implement via triggers.
+-- The ValidFrom/ValidTo columns are preserved for manual temporal implementation.
+-- Original history table: Application.Cities_Archive
 
+CREATE TABLE application.cities (
+    city_id                     INT             NOT NULL DEFAULT nextval('sequences.cityid'),
+    city_name                   VARCHAR(50)     NOT NULL,
+    state_province_id           INT             NOT NULL,
+    location                    geography       NULL,
+    latest_recorded_population  BIGINT          NULL,
+    last_edited_by              INT             NOT NULL,
+    valid_from                  TIMESTAMP       NOT NULL DEFAULT now(),
+    valid_to                    TIMESTAMP       NOT NULL DEFAULT '9999-12-31 23:59:59.9999999',
+    CONSTRAINT pk_application_cities PRIMARY KEY (city_id),
+    CONSTRAINT fk_application_cities_application_people FOREIGN KEY (last_edited_by) REFERENCES application.people (person_id),
+    CONSTRAINT fk_application_cities_stateprovinceid_application_stateprovinces FOREIGN KEY (state_province_id) REFERENCES application.state_provinces (state_province_id)
+);
 
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Application', @level1type = N'TABLE', @level1name = N'Cities', @level2type = N'INDEX', @level2name = N'FK_Application_Cities_StateProvinceID';
+CREATE INDEX fk_application_cities_stateprovinceid
+    ON application.cities (state_province_id);
 
+COMMENT ON INDEX fk_application_cities_stateprovinceid IS 'Auto-created to support a foreign key';
 
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = N'Cities that are part of any address (including geographic location)', @level0type = N'SCHEMA', @level0name = N'Application', @level1type = N'TABLE', @level1name = N'Cities';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Numeric ID used for reference to a city within the database', @level0type = N'SCHEMA', @level0name = N'Application', @level1type = N'TABLE', @level1name = N'Cities', @level2type = N'COLUMN', @level2name = N'CityID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Formal name of the city', @level0type = N'SCHEMA', @level0name = N'Application', @level1type = N'TABLE', @level1name = N'Cities', @level2type = N'COLUMN', @level2name = N'CityName';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'State or province for this city', @level0type = N'SCHEMA', @level0name = N'Application', @level1type = N'TABLE', @level1name = N'Cities', @level2type = N'COLUMN', @level2name = N'StateProvinceID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Geographic location of the city', @level0type = N'SCHEMA', @level0name = N'Application', @level1type = N'TABLE', @level1name = N'Cities', @level2type = N'COLUMN', @level2name = N'Location';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Latest available population for the City', @level0type = N'SCHEMA', @level0name = N'Application', @level1type = N'TABLE', @level1name = N'Cities', @level2type = N'COLUMN', @level2name = N'LatestRecordedPopulation';
-
+COMMENT ON TABLE application.cities IS 'Cities that are part of any address (including geographic location)';
+COMMENT ON COLUMN application.cities.city_id IS 'Numeric ID used for reference to a city within the database';
+COMMENT ON COLUMN application.cities.city_name IS 'Formal name of the city';
+COMMENT ON COLUMN application.cities.state_province_id IS 'State or province for this city';
+COMMENT ON COLUMN application.cities.location IS 'Geographic location of the city';
+COMMENT ON COLUMN application.cities.latest_recorded_population IS 'Latest available population for the City';

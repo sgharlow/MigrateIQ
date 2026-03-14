@@ -1,238 +1,118 @@
-﻿CREATE TABLE [Sales].[Customers] (
-    [CustomerID]                 INT                                         CONSTRAINT [DF_Sales_Customers_CustomerID] DEFAULT (NEXT VALUE FOR [Sequences].[CustomerID]) NOT NULL,
-    [CustomerName]               NVARCHAR (100)                              NOT NULL,
-    [BillToCustomerID]           INT                                         NOT NULL,
-    [CustomerCategoryID]         INT                                         NOT NULL,
-    [BuyingGroupID]              INT                                         NULL,
-    [PrimaryContactPersonID]     INT                                         NOT NULL,
-    [AlternateContactPersonID]   INT                                         NULL,
-    [DeliveryMethodID]           INT                                         NOT NULL,
-    [DeliveryCityID]             INT                                         NOT NULL,
-    [PostalCityID]               INT                                         NOT NULL,
-    [CreditLimit]                DECIMAL (18, 2)                             NULL,
-    [AccountOpenedDate]          DATE                                        NOT NULL,
-    [StandardDiscountPercentage] DECIMAL (18, 3)                             NOT NULL,
-    [IsStatementSent]            BIT                                         NOT NULL,
-    [IsOnCreditHold]             BIT                                         NOT NULL,
-    [PaymentDays]                INT                                         NOT NULL,
-    [PhoneNumber]                NVARCHAR (20)                               NOT NULL,
-    [FaxNumber]                  NVARCHAR (20)                               NOT NULL,
-    [DeliveryRun]                NVARCHAR (5)                                NULL,
-    [RunPosition]                NVARCHAR (5)                                NULL,
-    [WebsiteURL]                 NVARCHAR (256)                              NOT NULL,
-    [DeliveryAddressLine1]       NVARCHAR (60)                               NOT NULL,
-    [DeliveryAddressLine2]       NVARCHAR (60)                               NULL,
-    [DeliveryPostalCode]         NVARCHAR (10)                               NOT NULL,
-    [DeliveryLocation]           [sys].[geography]                           NULL,
-    [PostalAddressLine1]         NVARCHAR (60)                               NOT NULL,
-    [PostalAddressLine2]         NVARCHAR (60)                               NULL,
-    [PostalPostalCode]           NVARCHAR (10)                               NOT NULL,
-    [LastEditedBy]               INT                                         NOT NULL,
-    [ValidFrom]                  DATETIME2 (7) GENERATED ALWAYS AS ROW START NOT NULL,
-    [ValidTo]                    DATETIME2 (7) GENERATED ALWAYS AS ROW END   NOT NULL,
-    CONSTRAINT [PK_Sales_Customers] PRIMARY KEY CLUSTERED ([CustomerID] ASC),
-    CONSTRAINT [FK_Sales_Customers_AlternateContactPersonID_Application_People] FOREIGN KEY ([AlternateContactPersonID]) REFERENCES [Application].[People] ([PersonID]),
-    CONSTRAINT [FK_Sales_Customers_Application_People] FOREIGN KEY ([LastEditedBy]) REFERENCES [Application].[People] ([PersonID]),
-    CONSTRAINT [FK_Sales_Customers_BillToCustomerID_Sales_Customers] FOREIGN KEY ([BillToCustomerID]) REFERENCES [Sales].[Customers] ([CustomerID]),
-    CONSTRAINT [FK_Sales_Customers_BuyingGroupID_Sales_BuyingGroups] FOREIGN KEY ([BuyingGroupID]) REFERENCES [Sales].[BuyingGroups] ([BuyingGroupID]),
-    CONSTRAINT [FK_Sales_Customers_CustomerCategoryID_Sales_CustomerCategories] FOREIGN KEY ([CustomerCategoryID]) REFERENCES [Sales].[CustomerCategories] ([CustomerCategoryID]),
-    CONSTRAINT [FK_Sales_Customers_DeliveryCityID_Application_Cities] FOREIGN KEY ([DeliveryCityID]) REFERENCES [Application].[Cities] ([CityID]),
-    CONSTRAINT [FK_Sales_Customers_DeliveryMethodID_Application_DeliveryMethods] FOREIGN KEY ([DeliveryMethodID]) REFERENCES [Application].[DeliveryMethods] ([DeliveryMethodID]),
-    CONSTRAINT [FK_Sales_Customers_PostalCityID_Application_Cities] FOREIGN KEY ([PostalCityID]) REFERENCES [Application].[Cities] ([CityID]),
-    CONSTRAINT [FK_Sales_Customers_PrimaryContactPersonID_Application_People] FOREIGN KEY ([PrimaryContactPersonID]) REFERENCES [Application].[People] ([PersonID]),
-    CONSTRAINT [UQ_Sales_Customers_CustomerName] UNIQUE NONCLUSTERED ([CustomerName] ASC),
-    PERIOD FOR SYSTEM_TIME ([ValidFrom], [ValidTo])
-)
-WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE=[Sales].[Customers_Archive], DATA_CONSISTENCY_CHECK=ON));
-
-
-
-
-GO
-CREATE NONCLUSTERED INDEX [FK_Sales_Customers_CustomerCategoryID]
-    ON [Sales].[Customers]([CustomerCategoryID] ASC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [FK_Sales_Customers_BuyingGroupID]
-    ON [Sales].[Customers]([BuyingGroupID] ASC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [FK_Sales_Customers_PrimaryContactPersonID]
-    ON [Sales].[Customers]([PrimaryContactPersonID] ASC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [FK_Sales_Customers_AlternateContactPersonID]
-    ON [Sales].[Customers]([AlternateContactPersonID] ASC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [FK_Sales_Customers_DeliveryMethodID]
-    ON [Sales].[Customers]([DeliveryMethodID] ASC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [FK_Sales_Customers_DeliveryCityID]
-    ON [Sales].[Customers]([DeliveryCityID] ASC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [FK_Sales_Customers_PostalCityID]
-    ON [Sales].[Customers]([PostalCityID] ASC);
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_Sales_Customers_Perf_20160301_06]
-    ON [Sales].[Customers]([IsOnCreditHold] ASC, [CustomerID] ASC, [BillToCustomerID] ASC)
-    INCLUDE([PrimaryContactPersonID]);
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'FK_Sales_Customers_CustomerCategoryID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'FK_Sales_Customers_BuyingGroupID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'FK_Sales_Customers_PrimaryContactPersonID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'FK_Sales_Customers_AlternateContactPersonID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'FK_Sales_Customers_DeliveryMethodID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'FK_Sales_Customers_DeliveryCityID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Auto-created to support a foreign key', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'FK_Sales_Customers_PostalCityID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Improves performance of order picking and invoicing', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'INDEX', @level2name = N'IX_Sales_Customers_Perf_20160301_06';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = N'Main entity tables for customers (organizations or individuals)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Numeric ID used for reference to a customer within the database', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'CustomerID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Customer''s full name (usually a trading name)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'CustomerName';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Customer that this is billed to (usually the same customer but can be another parent company)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'BillToCustomerID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Customer''s category', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'CustomerCategoryID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Customer''s buying group (optional)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'BuyingGroupID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Primary contact', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'PrimaryContactPersonID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Alternate contact', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'AlternateContactPersonID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Standard delivery method for stock items sent to this customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'DeliveryMethodID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'ID of the delivery city for this address', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'DeliveryCityID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'ID of the postal city for this address', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'PostalCityID';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Credit limit for this customer (NULL if unlimited)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'CreditLimit';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Date this customer account was opened', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'AccountOpenedDate';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Standard discount offered to this customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'StandardDiscountPercentage';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Is a statement sent to this customer? (Or do they just pay on each invoice?)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'IsStatementSent';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Is this customer on credit hold? (Prevents further deliveries to this customer)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'IsOnCreditHold';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Number of days for payment of an invoice (ie payment terms)', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'PaymentDays';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Phone number', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'PhoneNumber';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Fax number  ', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'FaxNumber';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Normal delivery run for this customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'DeliveryRun';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Normal position in the delivery run for this customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'RunPosition';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'URL for the website for this customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'WebsiteURL';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'First delivery address line for the customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'DeliveryAddressLine1';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Second delivery address line for the customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'DeliveryAddressLine2';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Delivery postal code for the customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'DeliveryPostalCode';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Geographic location for the customer''s office/warehouse', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'DeliveryLocation';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'First postal address line for the customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'PostalAddressLine1';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Second postal address line for the customer', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'PostalAddressLine2';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'Description', @value = 'Postal code for the customer when sending by mail', @level0type = N'SCHEMA', @level0name = N'Sales', @level1type = N'TABLE', @level1name = N'Customers', @level2type = N'COLUMN', @level2name = N'PostalPostalCode';
-
+-- Translated from MSSQL to PostgreSQL by MigrateIQ
+
+-- Requires PostGIS extension for geography type
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- TEMPORAL TABLE NOTE: MSSQL uses native system-versioned temporal tables.
+-- PostgreSQL approach: Use temporal_tables extension or implement via triggers.
+-- The ValidFrom/ValidTo columns are preserved for manual temporal implementation.
+-- Original history table: Sales.Customers_Archive
+
+CREATE TABLE sales.customers (
+    customer_id                  INT             NOT NULL DEFAULT nextval('sequences.customerid'),
+    customer_name                VARCHAR(100)    NOT NULL,
+    bill_to_customer_id          INT             NOT NULL,
+    customer_category_id         INT             NOT NULL,
+    buying_group_id              INT             NULL,
+    primary_contact_person_id    INT             NOT NULL,
+    alternate_contact_person_id  INT             NULL,
+    delivery_method_id           INT             NOT NULL,
+    delivery_city_id             INT             NOT NULL,
+    postal_city_id               INT             NOT NULL,
+    credit_limit                 DECIMAL(18, 2)  NULL,
+    account_opened_date          DATE            NOT NULL,
+    standard_discount_percentage DECIMAL(18, 3)  NOT NULL,
+    is_statement_sent            BOOLEAN         NOT NULL,
+    is_on_credit_hold            BOOLEAN         NOT NULL,
+    payment_days                 INT             NOT NULL,
+    phone_number                 VARCHAR(20)     NOT NULL,
+    fax_number                   VARCHAR(20)     NOT NULL,
+    delivery_run                 VARCHAR(5)      NULL,
+    run_position                 VARCHAR(5)      NULL,
+    website_url                  VARCHAR(256)    NOT NULL,
+    delivery_address_line1       VARCHAR(60)     NOT NULL,
+    delivery_address_line2       VARCHAR(60)     NULL,
+    delivery_postal_code         VARCHAR(10)     NOT NULL,
+    delivery_location            geography       NULL,
+    postal_address_line1         VARCHAR(60)     NOT NULL,
+    postal_address_line2         VARCHAR(60)     NULL,
+    postal_postal_code           VARCHAR(10)     NOT NULL,
+    last_edited_by               INT             NOT NULL,
+    valid_from                   TIMESTAMP       NOT NULL DEFAULT now(),
+    valid_to                     TIMESTAMP       NOT NULL DEFAULT '9999-12-31 23:59:59.9999999',
+    CONSTRAINT pk_sales_customers PRIMARY KEY (customer_id),
+    CONSTRAINT fk_sales_customers_alternatecontactpersonid_application_people FOREIGN KEY (alternate_contact_person_id) REFERENCES application.people (person_id),
+    CONSTRAINT fk_sales_customers_application_people FOREIGN KEY (last_edited_by) REFERENCES application.people (person_id),
+    CONSTRAINT fk_sales_customers_billtocustomerid_sales_customers FOREIGN KEY (bill_to_customer_id) REFERENCES sales.customers (customer_id),
+    CONSTRAINT fk_sales_customers_buyinggroupid_sales_buyinggroups FOREIGN KEY (buying_group_id) REFERENCES sales.buying_groups (buying_group_id),
+    CONSTRAINT fk_sales_customers_customercategoryid_sales_customercategories FOREIGN KEY (customer_category_id) REFERENCES sales.customer_categories (customer_category_id),
+    CONSTRAINT fk_sales_customers_deliverycityid_application_cities FOREIGN KEY (delivery_city_id) REFERENCES application.cities (city_id),
+    CONSTRAINT fk_sales_customers_deliverymethodid_application_deliverymethods FOREIGN KEY (delivery_method_id) REFERENCES application.delivery_methods (delivery_method_id),
+    CONSTRAINT fk_sales_customers_postalcityid_application_cities FOREIGN KEY (postal_city_id) REFERENCES application.cities (city_id),
+    CONSTRAINT fk_sales_customers_primarycontactpersonid_application_people FOREIGN KEY (primary_contact_person_id) REFERENCES application.people (person_id),
+    CONSTRAINT uq_sales_customers_customername UNIQUE (customer_name)
+);
+
+CREATE INDEX fk_sales_customers_customercategoryid
+    ON sales.customers (customer_category_id);
+
+CREATE INDEX fk_sales_customers_buyinggroupid
+    ON sales.customers (buying_group_id);
+
+CREATE INDEX fk_sales_customers_primarycontactpersonid
+    ON sales.customers (primary_contact_person_id);
+
+CREATE INDEX fk_sales_customers_alternatecontactpersonid
+    ON sales.customers (alternate_contact_person_id);
+
+CREATE INDEX fk_sales_customers_deliverymethodid
+    ON sales.customers (delivery_method_id);
+
+CREATE INDEX fk_sales_customers_deliverycityid
+    ON sales.customers (delivery_city_id);
+
+CREATE INDEX fk_sales_customers_postalcityid
+    ON sales.customers (postal_city_id);
+
+CREATE INDEX ix_sales_customers_perf_20160301_06
+    ON sales.customers (is_on_credit_hold, customer_id, bill_to_customer_id)
+    INCLUDE (primary_contact_person_id);
+
+COMMENT ON INDEX fk_sales_customers_customercategoryid IS 'Auto-created to support a foreign key';
+COMMENT ON INDEX fk_sales_customers_buyinggroupid IS 'Auto-created to support a foreign key';
+COMMENT ON INDEX fk_sales_customers_primarycontactpersonid IS 'Auto-created to support a foreign key';
+COMMENT ON INDEX fk_sales_customers_alternatecontactpersonid IS 'Auto-created to support a foreign key';
+COMMENT ON INDEX fk_sales_customers_deliverymethodid IS 'Auto-created to support a foreign key';
+COMMENT ON INDEX fk_sales_customers_deliverycityid IS 'Auto-created to support a foreign key';
+COMMENT ON INDEX fk_sales_customers_postalcityid IS 'Auto-created to support a foreign key';
+COMMENT ON INDEX ix_sales_customers_perf_20160301_06 IS 'Improves performance of order picking and invoicing';
+
+COMMENT ON TABLE sales.customers IS 'Main entity tables for customers (organizations or individuals)';
+COMMENT ON COLUMN sales.customers.customer_id IS 'Numeric ID used for reference to a customer within the database';
+COMMENT ON COLUMN sales.customers.customer_name IS 'Customer''s full name (usually a trading name)';
+COMMENT ON COLUMN sales.customers.bill_to_customer_id IS 'Customer that this is billed to (usually the same customer but can be another parent company)';
+COMMENT ON COLUMN sales.customers.customer_category_id IS 'Customer''s category';
+COMMENT ON COLUMN sales.customers.buying_group_id IS 'Customer''s buying group (optional)';
+COMMENT ON COLUMN sales.customers.primary_contact_person_id IS 'Primary contact';
+COMMENT ON COLUMN sales.customers.alternate_contact_person_id IS 'Alternate contact';
+COMMENT ON COLUMN sales.customers.delivery_method_id IS 'Standard delivery method for stock items sent to this customer';
+COMMENT ON COLUMN sales.customers.delivery_city_id IS 'ID of the delivery city for this address';
+COMMENT ON COLUMN sales.customers.postal_city_id IS 'ID of the postal city for this address';
+COMMENT ON COLUMN sales.customers.credit_limit IS 'Credit limit for this customer (NULL if unlimited)';
+COMMENT ON COLUMN sales.customers.account_opened_date IS 'Date this customer account was opened';
+COMMENT ON COLUMN sales.customers.standard_discount_percentage IS 'Standard discount offered to this customer';
+COMMENT ON COLUMN sales.customers.is_statement_sent IS 'Is a statement sent to this customer? (Or do they just pay on each invoice?)';
+COMMENT ON COLUMN sales.customers.is_on_credit_hold IS 'Is this customer on credit hold? (Prevents further deliveries to this customer)';
+COMMENT ON COLUMN sales.customers.payment_days IS 'Number of days for payment of an invoice (ie payment terms)';
+COMMENT ON COLUMN sales.customers.phone_number IS 'Phone number';
+COMMENT ON COLUMN sales.customers.fax_number IS 'Fax number';
+COMMENT ON COLUMN sales.customers.delivery_run IS 'Normal delivery run for this customer';
+COMMENT ON COLUMN sales.customers.run_position IS 'Normal position in the delivery run for this customer';
+COMMENT ON COLUMN sales.customers.website_url IS 'URL for the website for this customer';
+COMMENT ON COLUMN sales.customers.delivery_address_line1 IS 'First delivery address line for the customer';
+COMMENT ON COLUMN sales.customers.delivery_address_line2 IS 'Second delivery address line for the customer';
+COMMENT ON COLUMN sales.customers.delivery_postal_code IS 'Delivery postal code for the customer';
+COMMENT ON COLUMN sales.customers.delivery_location IS 'Geographic location for the customer''s office/warehouse';
+COMMENT ON COLUMN sales.customers.postal_address_line1 IS 'First postal address line for the customer';
+COMMENT ON COLUMN sales.customers.postal_address_line2 IS 'Second postal address line for the customer';
+COMMENT ON COLUMN sales.customers.postal_postal_code IS 'Postal code for the customer when sending by mail';
