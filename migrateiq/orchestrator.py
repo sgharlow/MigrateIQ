@@ -25,6 +25,8 @@ import sys
 import urllib.request
 import urllib.error
 
+from migrateiq.sustainability import create_tracker, get_agent
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -401,6 +403,9 @@ def main():
     print(f"Request: {MIGRATION_REQUEST}")
     print()
 
+    # Initialize sustainability tracker
+    tracker = create_tracker()
+
     # Step 1: Get file list
     tree = list_repository_tree()
     file_paths = [f["path"] for f in tree if f.get("type") == "blob"]
@@ -408,6 +413,7 @@ def main():
 
     # Step 2: Scanner
     scan_results = run_scanner(file_paths)
+    tracker.total_files = scan_results.get("summary", {}).get("total", 0)
 
     if ISSUE_IID:
         note = f"## :mag: MigrateIQ Scanner\n\nFound **{scan_results.get('summary', {}).get('total', 0)}** SQL-related files.\n"
@@ -430,6 +436,10 @@ def main():
 
     # Step 5: Planner
     run_planner(validation_results)
+
+    # Step 6: Sustainability report
+    if ISSUE_IID:
+        post_issue_note(ISSUE_IID, tracker.format_markdown())
 
 
 if __name__ == "__main__":
