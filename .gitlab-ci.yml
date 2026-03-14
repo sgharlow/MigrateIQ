@@ -1,0 +1,26 @@
+# MigrateIQ External Agent Fallback
+# This CI pipeline runs the MigrateIQ orchestrator as an External Agent.
+# Used if the Custom Flow YAML path doesn't work on GitLab Duo.
+#
+# Trigger manually via "Run Pipeline" in GitLab CI/CD, setting:
+#   CI_ISSUE_IID = the issue number to post results to
+#
+# The flow uses GitLab AI Gateway for Claude access (no separate API key needed).
+
+stages:
+  - migrate
+
+migrateiq:
+  stage: migrate
+  image: python:3.11-slim
+  variables:
+    ANTHROPIC_BASE_URL: "https://cloud.gitlab.com/ai/v1/proxy/anthropic"
+    ANTHROPIC_API_KEY: "$AI_FLOW_AI_GATEWAY_TOKEN"
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git > /dev/null
+  script:
+    - python migrateiq/orchestrator.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always
+    - when: never
