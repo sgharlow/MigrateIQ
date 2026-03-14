@@ -609,6 +609,10 @@ prompts:
         ## Output
         Post the migration roadmap as a comment on the parent issue. Your work
         is complete when all sub-issues, the MR, and the roadmap are created.
+
+        Note: Unlike the other agents, the Planner is the terminal agent in the
+        flow (routed to "end") so it does not produce a JSON output contract.
+        Its output is the GitLab artifacts it creates (issues, MR, roadmap comment).
       user: |
         Validation results from Validator agent:
         {{validation_results}}

@@ -203,22 +203,25 @@ MSSQL's native system-versioned temporal tables (`SYSTEM_VERSIONING = ON`) have 
 
 ### Recommended Execution Order
 
-| Phase | Scope | Est. Hours | Dependencies | Issues |
-|-------|-------|-----------|-------------|--------|
-| 1 | **Schema Migration** — 4 table DDL files | 3 hrs | None | #101 |
-| 2 | **Views & UDTs** — 1 view, 2 type definitions | 1 hr | Phase 1 | #102 |
-| 3 | **Procedures & Functions** — 6 procs, 2 functions | 6 hrs | Phase 1 | #103 |
-| 4 | **Application Code** — 4 TypeScript files | 3 hrs | Phase 1 | #104 |
-| 5 | **Manual Review** — 2 critical + 5 warnings | 3 hrs | Phases 1-4 | #105 |
-| 6 | **Testing & Validation** — Verify correctness | 2 hrs | All phases | #106 |
+| Order | Phase | Scope | Est. Hours | Dependencies | Issue |
+|-------|-------|-------|-----------|-------------|-------|
+| 1st | Phase 1 | **Schema Migration** — 4 table DDL files | 3 hrs | None | #101 |
+| 2nd | Phase 3 | **Views & UDTs** — 1 view, 2 type definitions | 1 hr | Phase 1 | #103 |
+| 3rd | Phase 2 | **Procedures & Functions** — 6 procs, 2 functions | 6 hrs | Phase 1 | #102 |
+| 4th | Phase 4 | **Application Code** — 4 TypeScript files | 3 hrs | Phase 1 | #104 |
+| 5th | Phase 5 | **Manual Review** — 2 critical + 5 warnings | 3 hrs | Phases 1-4 | #105 |
+| 6th | Phase 6 | **Testing & Validation** — Verify correctness | 2 hrs | All phases | #106 |
+
+> Note: Execution order differs from phase numbering. Views/UDTs (Phase 3) should be
+> applied before procedures (Phase 2) because procedures may reference views and types.
 
 ### Merge Request
 See !42 for all translated files. Review checklist attached based on validation findings.
 
 ### Sub-Issues Created
 - #101 — [MigrateIQ] Phase 1: Schema Migration (DDL)
-- #102 — [MigrateIQ] Phase 2: Views & User-Defined Types
-- #103 — [MigrateIQ] Phase 3: Stored Procedures & Functions
+- #102 — [MigrateIQ] Phase 2: Stored Procedures & Functions
+- #103 — [MigrateIQ] Phase 3: Views & User-Defined Types
 - #104 — [MigrateIQ] Phase 4: Application Code Updates
 - #105 — [MigrateIQ] Phase 5: Manual Review Required
 - #106 — [MigrateIQ] Phase 6: Testing & Validation

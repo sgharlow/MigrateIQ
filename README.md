@@ -133,7 +133,7 @@ A pre-created sample issue is available: [Sample Migration Issue](#) *(link adde
 
 ```
 .gitlab/duo/
-  flows/migrateiq.yml       # Multi-agent flow definition (4 agents, 657 lines)
+  flows/migrateiq.yml       # Multi-agent flow definition (4 agents, 634 lines)
   agent-config.yml           # Flow execution environment
   chat-rules.md              # Project context for Duo chat
 database/

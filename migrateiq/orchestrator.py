@@ -22,6 +22,7 @@ Environment variables (set by GitLab CI or .gitlab/duo/flows config):
 import json
 import os
 import sys
+import urllib.parse
 import urllib.request
 import urllib.error
 
@@ -116,8 +117,12 @@ def create_merge_request(source: str, target: str, title: str, description: str)
 # Claude API helper
 # ---------------------------------------------------------------------------
 
-def call_claude(system_prompt: str, user_message: str) -> str:
-    """Call Claude API and return the response text."""
+# Global reference to sustainability tracker (set in main)
+_tracker = None
+
+
+def call_claude(system_prompt: str, user_message: str, agent_name: str = "") -> str:
+    """Call Claude API and return the response text. Tracks token usage."""
     url = f"{ANTHROPIC_URL}/v1/messages"
     headers = {
         "x-api-key": ANTHROPIC_KEY,
@@ -134,6 +139,13 @@ def call_claude(system_prompt: str, user_message: str) -> str:
     try:
         with urllib.request.urlopen(req, timeout=300) as resp:
             result = json.loads(resp.read().decode())
+            # Track token usage for sustainability reporting
+            if _tracker and agent_name:
+                usage = result.get("usage", {})
+                agent = get_agent(_tracker, agent_name)
+                agent.input_tokens += usage.get("input_tokens", 0)
+                agent.output_tokens += usage.get("output_tokens", 0)
+                agent.files_processed += 1
             return result.get("content", [{}])[0].get("text", "")
     except urllib.error.HTTPError as e:
         print(f"Claude API error: {e.code} {e.read().decode()}", file=sys.stderr)
@@ -211,7 +223,7 @@ def run_scanner(file_list: list[str]) -> dict:
     print("=== SCANNER AGENT ===")
     files_text = "\n".join(file_list)
     user_msg = f"Migration request: {MIGRATION_REQUEST}\n\nRepository files:\n{files_text}"
-    response = call_claude(SCANNER_SYSTEM, user_msg)
+    response = call_claude(SCANNER_SYSTEM, user_msg, agent_name="Scanner")
     result = extract_json(response)
     print(f"Scanner found {result.get('summary', {}).get('total', 0)} files")
     return result
@@ -233,7 +245,7 @@ def run_translator(scan_results: dict) -> dict:
             continue
 
         user_msg = f"Translate this file from MSSQL to PostgreSQL 15+.\n\nFile: {path}\n\n```sql\n{original}\n```"
-        translated = call_claude(TRANSLATOR_SYSTEM, user_msg)
+        translated = call_claude(TRANSLATOR_SYSTEM, user_msg, agent_name="Translator")
 
         # Strip markdown code fences if present
         if translated.startswith("```"):
@@ -278,7 +290,7 @@ def run_validator(scan_results: dict, translation_results: dict) -> dict:
 
         print(f"  Validating: {path}")
         user_msg = f"Validate this translation.\n\nOriginal MSSQL:\n```sql\n{original}\n```\n\nTranslated PostgreSQL:\n```sql\n{translated}\n```"
-        response = call_claude(VALIDATOR_SYSTEM, user_msg)
+        response = call_claude(VALIDATOR_SYSTEM, user_msg, agent_name="Validator")
         result = extract_json(response)
 
         for risk in result.get("risks", []):
@@ -404,7 +416,9 @@ def main():
     print()
 
     # Initialize sustainability tracker
+    global _tracker
     tracker = create_tracker()
+    _tracker = tracker
 
     # Step 1: Get file list
     tree = list_repository_tree()
