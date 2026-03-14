@@ -132,10 +132,12 @@ A pre-created sample issue is available: [Sample Migration Issue](#) *(link adde
 ## Project Structure
 
 ```
-.gitlab/duo/
-  flows/migrateiq.yml       # Multi-agent flow definition (4 agents, 634 lines)
-  agent-config.yml           # Flow execution environment
-  chat-rules.md              # Project context for Duo chat
+.gitlab/
+  duo/
+    flows/migrateiq.yml      # Multi-agent flow definition (4 agents, 638 lines)
+    agent-config.yml          # Flow execution environment
+    chat-rules.md             # Project context for Duo chat
+  .gitlab-ci.yml             # CI pipeline for External Agent fallback
 database/
   tables/                    # 4 table definitions (temporal, geography, JSON)
   stored-procedures/         # 6 procedures (native compilation, RLS, TVPs)
@@ -143,11 +145,20 @@ database/
   views/                     # 1 view (DECOMPRESS)
   user-defined-types/        # 2 types (memory-optimized TVPs)
 src/
+  index.ts                   # Barrel export entry point
   config/database.config.ts  # MSSQL connection pool
   queries/                   # 2 query files with inline T-SQL
   utils/sql-helpers.ts       # Temporal queries, full-text search, proc execution
+migrateiq/
+  orchestrator.py            # External Agent fallback (Python, runs in CI/CD)
+  sustainability.py          # Token tracking + energy estimation (Green Agent Prize)
+docs/
+  architecture.md            # Mermaid diagrams (system overview, data flow, pipeline)
+  demo-script.md             # 3-minute demo video script with narration
+  sample-outputs.md          # Expected agent output formats (test fixtures)
 AGENTS.md                    # Project structure for GitLab Duo context
 LICENSE                      # MIT
+package.json                 # Node.js project manifest
 ```
 
 ## License
