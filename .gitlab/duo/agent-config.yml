@@ -1,0 +1,13 @@
+image: python:3.11-slim
+
+setup_script:
+  - apt-get update && apt-get install -y git curl
+
+cache:
+  key:
+    prefix: migrateiq
+  paths:
+    - .cache/
+
+network_policy:
+  include_recommended_allowed: true
