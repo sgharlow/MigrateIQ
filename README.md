@@ -1,3 +1,5 @@
+> 📦 **Archived** — Database-migration intelligence for GitLab (multi-agent flow), early 2026. Not maintained. Code and history remain browsable.
+
 # MigrateIQ — Database Migration Intelligence for GitLab
 
 > **Assign an agent. Get a migration plan.** MigrateIQ is a multi-agent flow on GitLab Duo that automates SQL dialect translation, risk analysis, and migration planning — directly inside GitLab.
